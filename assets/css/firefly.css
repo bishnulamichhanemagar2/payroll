@@ -1,0 +1,399 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ✦ PAYROLL NEXUS — AUTONOMOUS FIREFLY MASCOT ("LUMI")
+   Lightweight, theme-adaptive, living SVG creature exploring the interface
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+    --firefly-body: #0d111d;
+    --firefly-body-rim: rgba(255, 255, 255, 0.22);
+    --firefly-head: #0a0d17;
+    --firefly-wing-fill: rgba(220, 240, 255, 0.42);
+    --firefly-wing-edge: rgba(182, 140, 255, 0.78);
+    --firefly-wing-specular: rgba(255, 255, 255, 0.88);
+    --firefly-accent: #b68cff;
+    --firefly-accent2: #7c8cff;
+    --firefly-cyan: #38bdf8;
+    --firefly-glow-warm: #ffd768;
+    --firefly-glow-white: #ffffff;
+    --firefly-glow-ambient: rgba(255, 215, 90, 0.42);
+    --firefly-glow-violet: rgba(182, 140, 255, 0.46);
+    --firefly-particle: #ffd768;
+    --firefly-wing-duration: 240ms;
+}
+
+body.dark-mode {
+    --firefly-body: #090c16;
+    --firefly-body-rim: rgba(255, 255, 255, 0.24);
+    --firefly-head: #070912;
+    --firefly-wing-fill: rgba(215, 235, 255, 0.46);
+    --firefly-wing-edge: rgba(182, 140, 255, 0.85);
+    --firefly-accent: #b68cff;
+    --firefly-accent2: #7c8cff;
+    --firefly-cyan: #38bdf8;
+    --firefly-glow-warm: #ffd768;
+    --firefly-glow-ambient: rgba(255, 215, 90, 0.46);
+    --firefly-glow-violet: rgba(182, 140, 255, 0.52);
+    --firefly-particle: #ffd768;
+}
+
+body.light-mode {
+    --firefly-body: #1e2536;
+    --firefly-body-rim: rgba(255, 255, 255, 0.38);
+    --firefly-head: #161c2b;
+    --firefly-wing-fill: rgba(240, 245, 255, 0.65);
+    --firefly-wing-edge: rgba(124, 140, 255, 0.72);
+    --firefly-accent: #7c3aed;
+    --firefly-accent2: #4f46e5;
+    --firefly-cyan: #0284c7;
+    --firefly-glow-warm: #f59e0b;
+    --firefly-glow-ambient: rgba(245, 158, 11, 0.32);
+    --firefly-glow-violet: rgba(124, 58, 237, 0.28);
+    --firefly-particle: #eab308;
+}
+
+/* ── Persistent Mascot Layer ── */
+#firefly-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 990;
+    overflow: hidden;
+    contain: layout size;
+}
+
+/* Canvas for gentle data particles */
+.firefly-particle-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Main Firefly Container */
+.firefly-creature {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 96px;
+    height: 96px;
+    margin-left: -48px;
+    margin-top: -48px;
+    pointer-events: auto;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 4px 16px var(--firefly-glow-ambient));
+    transition: filter 0.3s ease, opacity 0.4s ease;
+}
+
+.firefly-creature:active,
+.firefly-creature.is-dragging {
+    cursor: grabbing !important;
+}
+
+.firefly-creature.is-dragging {
+    --firefly-wing-duration: 65ms !important;
+    filter: drop-shadow(0 0 28px var(--firefly-glow-warm)) drop-shadow(0 0 18px var(--firefly-cyan)) !important;
+}
+
+.firefly-creature.is-sleeping {
+    --firefly-wing-duration: 1600ms !important;
+    filter: drop-shadow(0 2px 8px var(--firefly-glow-ambient)) !important;
+    opacity: 0.68;
+}
+
+/* Responsive proportions per specifications */
+@media (max-width: 1024px) {
+    .firefly-creature {
+        width: 76px;
+        height: 76px;
+        margin-left: -38px;
+        margin-top: -38px;
+    }
+}
+
+@media (max-width: 640px) {
+    .firefly-creature {
+        width: 54px;
+        height: 54px;
+        margin-left: -27px;
+        margin-top: -27px;
+    }
+}
+
+/* ── SVG Internal Structure ── */
+.firefly-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    display: block;
+}
+
+/* Body & Head styling */
+.firefly-head {
+    fill: var(--firefly-head);
+    stroke: var(--firefly-body-rim);
+    stroke-width: 0.8;
+    transition: fill 0.3s ease;
+}
+
+.firefly-body-main {
+    fill: var(--firefly-body);
+    stroke: var(--firefly-body-rim);
+    stroke-width: 0.8;
+    transition: fill 0.3s ease;
+}
+
+.firefly-abdomen {
+    fill: var(--firefly-body);
+    stroke: var(--firefly-body-rim);
+    stroke-width: 0.6;
+    transition: fill 0.3s ease;
+}
+
+.firefly-eye {
+    fill: #05070e;
+}
+
+/* Antennae */
+.antenna {
+    fill: none;
+    stroke: var(--firefly-body-rim);
+    stroke-width: 1.2;
+    stroke-linecap: round;
+    transition: stroke 0.3s ease;
+}
+
+.antenna-tip {
+    fill: var(--firefly-cyan);
+    filter: drop-shadow(0 0 4px var(--firefly-accent));
+    transition: fill 0.3s ease;
+}
+
+/* Data Core Glowing Abdomen */
+.firefly-aura {
+    mix-blend-mode: screen;
+    animation: fireflyAuraBreath 2.8s ease-in-out infinite alternate;
+}
+
+.firefly-core {
+    mix-blend-mode: screen;
+    animation: fireflyCorePulse 2.2s ease-in-out infinite alternate;
+}
+
+.firefly-core-inner {
+    mix-blend-mode: screen;
+    animation: fireflyCoreInnerPulse 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes fireflyAuraBreath {
+    0% {
+        transform: scale(0.92);
+        opacity: 0.55;
+    }
+    100% {
+        transform: scale(1.18);
+        opacity: 0.95;
+    }
+}
+
+@keyframes fireflyCorePulse {
+    0% {
+        opacity: 0.82;
+        transform: scale(0.96);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes fireflyCoreInnerPulse {
+    0% {
+        opacity: 0.88;
+        transform: scale(0.92);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+/* ── Wings Flutter System ── */
+.firefly-wing {
+    fill: url(#fireflyWingGrad);
+    stroke: var(--firefly-wing-edge);
+    stroke-width: 0.75;
+    stroke-opacity: 0.85;
+    backdrop-filter: blur(2px);
+    transition: stroke 0.3s ease;
+}
+
+.firefly-wing-vein {
+    fill: none;
+    stroke: var(--firefly-wing-specular);
+    stroke-width: 0.6;
+    stroke-opacity: 0.45;
+    stroke-linecap: round;
+}
+
+/* Wing Transform Origins (Relative to 160x160 coordinate space) */
+.wing-group {
+    transform-box: view-box;
+    will-change: transform;
+}
+
+.wing-left-front {
+    transform-origin: 74px 68px;
+    animation: wingFlapLF var(--firefly-wing-duration) cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+.wing-right-front {
+    transform-origin: 86px 68px;
+    animation: wingFlapRF var(--firefly-wing-duration) cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+}
+
+.wing-left-back {
+    transform-origin: 73px 76px;
+    animation: wingFlapLB var(--firefly-wing-duration) cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+    animation-delay: calc(var(--firefly-wing-duration) * -0.22);
+}
+
+.wing-right-back {
+    transform-origin: 87px 76px;
+    animation: wingFlapRB var(--firefly-wing-duration) cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+    animation-delay: calc(var(--firefly-wing-duration) * -0.22);
+}
+
+/* Wing Flap Keyframes — Organic Asymmetric Dihedral Flapping */
+@keyframes wingFlapLF {
+    0% {
+        transform: rotate(-14deg) scaleY(1) scaleX(1);
+        opacity: 0.92;
+    }
+    100% {
+        transform: rotate(34deg) scaleY(0.72) scaleX(0.88);
+        opacity: 0.65;
+    }
+}
+
+@keyframes wingFlapRF {
+    0% {
+        transform: rotate(14deg) scaleY(1) scaleX(1);
+        opacity: 0.92;
+    }
+    100% {
+        transform: rotate(-34deg) scaleY(0.72) scaleX(0.88);
+        opacity: 0.65;
+    }
+}
+
+@keyframes wingFlapLB {
+    0% {
+        transform: rotate(-10deg) scaleY(1) scaleX(1);
+        opacity: 0.85;
+    }
+    100% {
+        transform: rotate(26deg) scaleY(0.78) scaleX(0.92);
+        opacity: 0.55;
+    }
+}
+
+@keyframes wingFlapRB {
+    0% {
+        transform: rotate(10deg) scaleY(1) scaleX(1);
+        opacity: 0.85;
+    }
+    100% {
+        transform: rotate(-26deg) scaleY(0.78) scaleX(0.92);
+        opacity: 0.55;
+    }
+}
+
+/* ── State Variations ── */
+/* TRAVELLING: High cadence, streamlined posture */
+.firefly-creature.state-travelling {
+    --firefly-wing-duration: 90ms;
+    filter: drop-shadow(0 6px 20px var(--firefly-glow-ambient)) drop-shadow(0 0 12px var(--firefly-glow-violet));
+}
+
+/* IDLE: Gentle hovering flutter */
+.firefly-creature.state-idle {
+    --firefly-wing-duration: 220ms;
+}
+
+/* INSPECTING: Attentive flutter, enhanced core luminance */
+.firefly-creature.state-inspecting {
+    --firefly-wing-duration: 170ms;
+    filter: drop-shadow(0 0 24px var(--firefly-glow-warm)) drop-shadow(0 0 16px var(--firefly-glow-violet));
+}
+
+/* RESTING: Wings tucked gently, breathing slow */
+.firefly-creature.state-resting {
+    --firefly-wing-duration: 800ms;
+    filter: drop-shadow(0 2px 10px var(--firefly-glow-ambient));
+}
+.firefly-creature.state-resting .wing-left-front {
+    transform: rotate(12deg) scale(0.92);
+}
+.firefly-creature.state-resting .wing-right-front {
+    transform: rotate(-12deg) scale(0.92);
+}
+
+/* REACTING: Celebratory rapid flutter & brilliant burst */
+.firefly-creature.state-reacting {
+    --firefly-wing-duration: 65ms;
+    filter: drop-shadow(0 0 32px var(--firefly-glow-warm)) drop-shadow(0 0 24px var(--firefly-cyan));
+}
+
+/* PEEKING: Subtle tilt near card borders */
+.firefly-creature.state-peeking {
+    --firefly-wing-duration: 260ms;
+    opacity: 0.88;
+}
+
+/* ── Gentle Motion / Accessibility Mode ── */
+@media (prefers-reduced-motion: reduce) {
+    .firefly-creature {
+        will-change: transform;
+    }
+    .wing-left-front, .wing-right-front, .wing-left-back, .wing-right-back {
+        animation-duration: 800ms !important;
+    }
+    .firefly-aura, .firefly-core, .firefly-core-inner {
+        animation-duration: 3.5s !important;
+    }
+    .firefly-particle-canvas {
+        opacity: 0.35 !important;
+    }
+}
+
+/* App-level motion toggle override */
+body.motion-disabled .firefly-creature,
+body.no-anim .firefly-creature {
+    opacity: 0.85;
+}
+body.motion-disabled .wing-left-front, 
+body.motion-disabled .wing-right-front, 
+body.motion-disabled .wing-left-back, 
+body.motion-disabled .wing-right-back,
+body.no-anim .wing-left-front,
+body.no-anim .wing-right-front,
+body.no-anim .wing-left-back,
+body.no-anim .wing-right-back {
+    animation-duration: 900ms !important;
+}
+body.motion-disabled .firefly-aura, 
+body.motion-disabled .firefly-core, 
+body.motion-disabled .firefly-core-inner,
+body.no-anim .firefly-aura,
+body.no-anim .firefly-core,
+body.no-anim .firefly-core-inner {
+    animation-duration: 3s !important;
+}
+body.motion-disabled .firefly-particle-canvas,
+body.no-anim .firefly-particle-canvas {
+    opacity: 0.3;
+}
